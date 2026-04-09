@@ -178,6 +178,35 @@
       cursor: pointer;
       flex-shrink: 0;
       transition: opacity 0.15s;
+
+    .btn-voice {
+      width: 44px; height: 44px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .btn-voice:hover { background: var(--surface2); color: var(--text); }
+    .btn-voice.listening {
+      background: rgba(248,113,113,0.12);
+      border-color: var(--danger);
+      color: var(--danger);
+      animation: pulse-border 1s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: var(--danger); }
+      50% { border-color: rgba(248,113,113,0.3); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
     }
     .btn-add:hover { opacity: 0.88; }
 
@@ -471,11 +500,23 @@
   <div class="add-bar">
     <input class="add-input" id="add-input" type="text" placeholder="Add an item…" autocomplete="off"
            onkeydown="if(event.key==='Enter') addItem()" />
+    <button class="btn-voice" id="btn-voice" onclick="toggleVoice()" title="Voice input">
+      <svg id="voice-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="6" y="1" width="6" height="10" rx="3" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M3 9a6 6 0 0 0 12 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="9" y1="15" x2="9" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
     <button class="btn-add" onclick="addItem()">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M9 3v12M3 9h12" stroke="#0a1a12" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
     </button>
+  </div>
+  <!-- Voice status -->
+  <div id="voice-status" style="display:none;padding:6px 1.25rem;font-size:12px;font-family:var(--mono);color:var(--accent);display:none;align-items:center;gap:8px;">
+    <span id="voice-dot" style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;flex-shrink:0"></span>
+    <span id="voice-text">Listening…</span>
   </div>
 
   <!-- Filter pills -->
@@ -691,7 +732,7 @@
 
     // ── Location ──────────────────────────────────────
     function goToLocation() {
-      location.href = `location.html?id=${storeId}`;
+      location.href = `addstore.html?id=${storeId}`;
     }
 
     function clearLocation() {
@@ -728,6 +769,82 @@
       const idx = stores.findIndex(s => s.id === storeId);
       if (idx >= 0) stores[idx] = store;
       localStorage.setItem('shopremind_stores', JSON.stringify(stores));
+    }
+
+    // ── Reload data when navigating back ─────────────
+    window.addEventListener('pageshow', () => {
+      stores = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
+      store  = stores.find(s => s.id === storeId);
+      if (store) { updateLocUI(); render(); }
+    });
+
+    // ── Voice input ───────────────────────────────────
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+
+    if (!SpeechRecognition) {
+      // Hide mic button if not supported
+      document.getElementById('btn-voice').style.display = 'none';
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.continuous    = false;
+      recognition.interimResults = true;
+      recognition.lang          = 'en-CA';
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('btn-voice').classList.add('listening');
+        const vs = document.getElementById('voice-status');
+        vs.style.display = 'flex';
+        document.getElementById('voice-text').textContent = 'Listening…';
+      };
+
+      recognition.onresult = e => {
+        const transcript = Array.from(e.results)
+          .map(r => r[0].transcript).join('');
+        document.getElementById('add-input').value = transcript;
+        document.getElementById('voice-text').textContent = transcript || 'Listening…';
+
+        // If final result, auto-add after short pause
+        if (e.results[e.results.length - 1].isFinal) {
+          document.getElementById('voice-text').textContent = 'Got it: ' + transcript;
+          setTimeout(() => {
+            if (document.getElementById('add-input').value.trim()) addItem();
+          }, 600);
+        }
+      };
+
+      recognition.onerror = e => {
+        const msg = e.error === 'not-allowed'
+          ? 'Microphone blocked — check permissions'
+          : e.error === 'no-speech'
+          ? 'No speech detected — try again'
+          : 'Voice error: ' + e.error;
+        document.getElementById('voice-text').textContent = msg;
+        stopVoice();
+      };
+
+      recognition.onend = () => stopVoice();
+    }
+
+    function toggleVoice() {
+      if (!recognition) return;
+      if (isListening) {
+        recognition.stop();
+      } else {
+        document.getElementById('add-input').value = '';
+        recognition.start();
+      }
+    }
+
+    function stopVoice() {
+      isListening = false;
+      document.getElementById('btn-voice').classList.remove('listening');
+      setTimeout(() => {
+        document.getElementById('voice-status').style.display = 'none';
+      }, 1500);
     }
 
     // ── Close modal on bg click ───────────────────────
