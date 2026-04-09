@@ -555,7 +555,7 @@
   </div>
 
   <!-- Notification permission notice -->
-  <div id="notif-notice" onclick="requestNotifPermission()" style="display:none;margin:0.75rem 1.25rem 0;padding:14px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius);font-size:13px;color:var(--accent2);gap:10px;align-items:center;line-height:1.5;cursor:pointer;-webkit-tap-highlight-color:rgba(251,191,36,0.15);">
+  <button id="notif-notice" onclick="requestNotifPermission()" style="display:none;width:calc(100% - 2.5rem);margin:0.75rem 1.25rem 0;padding:14px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius);font-size:13px;color:var(--accent2);gap:10px;align-items:center;line-height:1.5;cursor:pointer;text-align:left;font-family:var(--font);-webkit-tap-highlight-color:rgba(251,191,36,0.2);">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
       <path d="M8 1a5 5 0 0 1 5 5c0 3-1.5 5-1.5 5H3.5S2 9 2 6a6 6 0 0 1 6-5z" stroke="currentColor" stroke-width="1.5"/>
       <path d="M6.5 13a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.5"/>
@@ -567,7 +567,7 @@
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:0.6">
       <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-  </div>
+  </button>
 
   <!-- Section header -->
   <div class="section-header">
@@ -925,24 +925,36 @@
     // ── Notification permission ───────────────────────
     function checkNotifPermission() {
       if (!('Notification' in window)) return;
+      const n = document.getElementById('notif-notice');
       if (Notification.permission === 'default') {
-        // Not yet asked — show the banner
-        const n = document.getElementById('notif-notice');
         n.style.display = 'flex';
-      } else if (Notification.permission === 'granted') {
-        document.getElementById('notif-notice').style.display = 'none';
+      } else {
+        n.style.display = 'none';
       }
     }
 
     function requestNotifPermission() {
-      if (!('Notification' in window)) return;
-      Notification.requestPermission().then(result => {
+      if (!('Notification' in window)) {
+        alert('Notifications not supported in this browser.');
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        document.getElementById('notif-notice').style.display = 'none';
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        alert('Notifications are blocked. In Chrome, tap the lock icon in the address bar → Site settings → Notifications → Allow.');
+        return;
+      }
+      // Request permission — must be called directly from a tap
+      Notification.requestPermission(result => {
         if (result === 'granted') {
           document.getElementById('notif-notice').style.display = 'none';
-          // Fire a test notification so user knows it worked
           new Notification('ShopRemind notifications on!', {
             body: 'You\'ll be alerted when you arrive at a store.'
           });
+        } else {
+          alert('Notifications blocked. Tap the lock icon in the Chrome address bar → Site settings → Notifications → Allow.');
         }
       });
     }
