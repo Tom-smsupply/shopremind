@@ -895,6 +895,13 @@
       bg.addEventListener('click', e => { if (e.target === bg) { bg.classList.remove('open'); } });
     });
 
+    // ── Reload data when navigating back (bfcache fix) ──
+    window.addEventListener('pageshow', e => {
+      stores   = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
+      settings = JSON.parse(localStorage.getItem('shopremind_settings') || '{"interval":30000,"notif":"on"}');
+      render();
+    });
+
     // ── Init ─────────────────────────────────────────
     (function init() {
       render();
