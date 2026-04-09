@@ -1,13 +1,14 @@
 // ShopRemind Service Worker
 // Handles background sync and push notifications
 
-const CACHE_NAME = 'shopremind-v1';
+const CACHE_NAME = 'shopremind-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/edit.html',
   '/addstore.html',
   '/manifest.json',
+  '/style.css',
   '/shopremindlogo-192.png',
   '/shopremindlogo-512.png'
 ];
