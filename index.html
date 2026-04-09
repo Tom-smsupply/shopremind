@@ -744,10 +744,22 @@
         userLng = pos.coords.longitude;
         setStatus('active', `Watching · ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
         checkProximity();
+        pingServiceWorker();
         render();
       }, () => {
         setStatus('error', 'Location error. Check permissions.');
       }, { enableHighAccuracy: true, maximumAge: 15000 });
+    }
+
+    // Send current location + stores to service worker for background checks
+    function pingServiceWorker() {
+      if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CHECK_PROXIMITY',
+        stores,
+        userLat,
+        userLng
+      });
     }
 
     function setStatus(state, text) {
@@ -961,6 +973,13 @@
         }).catch(() => tryStart());
       } else {
         tryStart();
+      }
+
+      // Register service worker for background support
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/shopremind/service-worker.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW registration failed:', err));
       }
     })();
   </script>
