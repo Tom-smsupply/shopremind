@@ -1,0 +1,10 @@
+{
+  "name": "ShopRemind",
+  "short_name": "ShopRemind",
+  "description": "Shopping list reminders when you arrive at a store",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0f0f11",
+  "theme_color": "#6ee7b7",
+  "orientation": "portrait"
+}
