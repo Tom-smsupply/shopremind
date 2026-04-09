@@ -4,393 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShopRemind — Add Store</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236ee7b7'/><path d='M50 20C36 20 25 31 25 44C25 62 50 80 50 80C50 80 75 62 75 44C75 31 64 20 50 20Z' fill='%230a1a12'/></svg>" />
+  <link rel="icon" href="shopremindlogo-192.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:       #0f0f11;
-      --surface:  #1a1a1f;
-      --surface2: #242429;
-      --border:   #2e2e36;
-      --accent:   #6ee7b7;
-      --accent2:  #fbbf24;
-      --text:     #f0eff4;
-      --muted:    #8b8a96;
-      --danger:   #f87171;
-      --radius:   14px;
-      --font:     'DM Sans', sans-serif;
-      --mono:     'DM Mono', monospace;
-    }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ── Header ── */
-    header {
-      padding: 1rem 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(15,15,17,0.97);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      z-index: 1000;
-    }
-
-    .btn-back {
-      width: 36px; height: 36px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: var(--muted);
-      text-decoration: none; flex-shrink: 0;
-      transition: background 0.15s, color 0.15s;
-    }
-    .btn-back:hover { background: var(--surface2); color: var(--text); }
-
-    .header-title {
-      font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
-    }
-
-    /* ── Scrollable content ── */
-    .page-body {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 2rem;
-    }
-
-    /* ── Form section ── */
-    .form-section {
-      padding: 1.25rem 1.25rem 0;
-    }
-
-    .field { margin-bottom: 1rem; }
-
-    .field label {
-      display: block;
-      font-size: 11px;
-      font-family: var(--mono);
-      color: var(--muted);
-      margin-bottom: 6px;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-    }
-
-    .field input, .field select {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 15px;
-      font-family: var(--font);
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .field input:focus { border-color: var(--accent); }
-    .field input::placeholder { color: var(--muted); }
-
-    /* ── Emoji picker ── */
-    .emoji-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .emoji-btn {
-      width: 42px; height: 42px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .emoji-btn:hover, .emoji-btn.selected {
-      border-color: var(--accent);
-      background: rgba(110,231,183,0.08);
-    }
-
-    /* ── Radius slider ── */
-    .radius-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .radius-row input[type="range"] {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-    }
-    .radius-row input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px; height: 20px;
-      background: var(--accent);
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    .radius-val {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--accent);
-      min-width: 52px;
-      text-align: right;
-    }
-
-    /* ── Divider ── */
-    .section-divider {
-      padding: 1rem 1.25rem 0.5rem;
-      font-size: 11px;
-      font-family: var(--mono);
-      color: var(--muted);
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .section-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* ── Map container — fixed height so it doesn't collapse ── */
-    .map-wrap {
-      margin: 0 1.25rem;
-      height: 280px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    #map {
-      width: 100%; height: 100%;
-    }
-
-    /* Dark map tiles */
-    .leaflet-tile {
-      filter: brightness(0.75) saturate(0.8) hue-rotate(180deg) invert(1) hue-rotate(180deg);
-    }
-
-    .leaflet-popup-content-wrapper {
-      background: var(--surface) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: 10px !important;
-      color: var(--text) !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-    }
-    .leaflet-popup-tip { background: var(--surface) !important; }
-    .leaflet-popup-content { font-family: var(--font) !important; font-size: 13px !important; color: var(--text) !important; }
-
-    .map-hint-overlay {
-      position: absolute;
-      bottom: 10px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(15,15,17,0.85);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 12px;
-      color: var(--muted);
-      pointer-events: none;
-      z-index: 500;
-      white-space: nowrap;
-      backdrop-filter: blur(6px);
-      transition: opacity 0.4s;
-    }
-    .map-hint-overlay.hidden { opacity: 0; }
-
-    /* ── Search bar ── */
-    .search-section {
-      padding: 0.75rem 1.25rem 0;
-    }
-
-    .search-wrap {
-      display: flex;
-      gap: 8px;
-      position: relative;
-    }
-
-    .search-input {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 14px;
-      font-family: var(--font);
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .search-input:focus { border-color: var(--accent); }
-    .search-input::placeholder { color: var(--muted); }
-
-    .btn-search {
-      padding: 0 16px;
-      height: 44px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 13px;
-      font-family: var(--font);
-      color: var(--text);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-      flex-shrink: 0;
-    }
-    .btn-search:hover { background: #2f2f38; }
-
-    /* Search results */
-    #search-results {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-top: 6px;
-      overflow: hidden;
-      display: none;
-    }
-    #search-results.visible { display: block; }
-
-    .result-item {
-      padding: 11px 14px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-    }
-    .result-item:last-child { border-bottom: none; }
-    .result-item:hover { background: var(--surface2); }
-
-    .result-name { font-size: 13px; font-weight: 500; color: var(--text); }
-    .result-addr { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
-
-    /* ── GPS button ── */
-    .btn-gps {
-      width: 100%;
-      margin: 0.75rem 0 0;
-      padding: 10px 14px;
-      background: rgba(110,231,183,0.07);
-      border: 1px solid rgba(110,231,183,0.2);
-      border-radius: 10px;
-      font-size: 13px;
-      font-family: var(--font);
-      color: var(--accent);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      gap: 8px;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .btn-gps:hover { background: rgba(110,231,183,0.13); }
-
-    /* ── Selected location strip ── */
-    #loc-strip {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: rgba(110,231,183,0.06);
-      border: 1px solid rgba(110,231,183,0.2);
-      border-radius: 10px;
-      margin: 0.75rem 1.25rem 0;
-      font-size: 13px;
-    }
-    #loc-strip.visible { display: flex; }
-
-    .loc-info { flex: 1; min-width: 0; }
-    .loc-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .loc-coords { font-size: 11px; font-family: var(--mono); color: var(--accent); margin-top: 2px; }
-
-    .btn-clear-loc {
-      font-size: 11px; font-family: var(--mono);
-      color: var(--muted); background: none; border: none;
-      cursor: pointer; flex-shrink: 0; padding: 4px;
-      transition: color 0.15s;
-    }
-    .btn-clear-loc:hover { color: var(--danger); }
-
-    /* ── Save button ── */
-    .save-section {
-      padding: 1.25rem 1.25rem 0;
-    }
-
-    .btn-save {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      border: none;
-      border-radius: 11px;
-      font-size: 15px;
-      font-weight: 600;
-      font-family: var(--font);
-      color: #0a1a12;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-    .btn-save:hover { opacity: 0.9; }
-    .btn-save:active { transform: scale(0.98); }
-    .btn-save:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-    .save-hint {
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 8px;
-    }
-
-    /* Spinner */
-    .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(110,231,183,0.3);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
-    .spinner.visible { display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; flex-direction: column; }
+    .page-body { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 2rem; }
   </style>
 </head>
 <body>
 
   <header>
     <a class="btn-back" href="index.html">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
         <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
-    <span class="header-title" id="page-title">Add store</span>
+    <span id="page-title" style="font-size:19px;font-weight:700;color:var(--navy);margin-left:4px">Add store</span>
   </header>
 
   <div class="page-body">
 
-    <!-- Store details -->
-    <div class="form-section">
+    <div style="padding:1.25rem 1.25rem 0">
 
       <div class="field">
         <label>Store name</label>
@@ -414,36 +50,32 @@
       </div>
 
       <div class="field">
-        <label>Alert radius — <span id="radius-display" style="color:var(--accent);font-family:var(--mono)">200 m</span></label>
-        <div class="radius-row">
-          <input type="range" id="input-radius" min="50" max="1000" step="50" value="200"
-                 oninput="document.getElementById('radius-display').textContent = this.value + ' m'" />
-        </div>
+        <label>Alert radius — <span id="radius-display" style="color:var(--accent-dk);font-family:'DM Mono',monospace">200 m</span></label>
+        <input type="range" id="input-radius" min="50" max="1000" step="50" value="200"
+               oninput="document.getElementById('radius-display').textContent = this.value + ' m'" />
       </div>
 
     </div>
 
-    <!-- Location section -->
     <div class="section-divider">Store location</div>
 
-    <!-- Map -->
     <div class="map-wrap">
       <div id="map"></div>
       <div class="map-hint-overlay" id="map-hint">Tap map to drop a pin</div>
     </div>
 
-    <!-- Search -->
-    <div class="search-section">
+    <div style="padding:0.75rem 1.25rem 0">
       <div class="search-wrap">
         <input class="search-input" id="search-input" type="text"
                placeholder="Search store name or address…" autocomplete="off"
-               onkeydown="if(event.key==='Enter'){doSearch();}" />
+               onkeydown="if(event.key==='Enter') doSearch()" />
         <span class="spinner" id="search-spinner"></span>
         <button class="btn-search" onclick="doSearch()">Search</button>
       </div>
-      <div id="search-results"></div>
+      <div class="search-results" id="search-results"></div>
+
       <button class="btn-gps" onclick="useMyLocation()">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
           <path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
@@ -452,41 +84,37 @@
     </div>
 
     <!-- Selected location -->
-    <div id="loc-strip">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;color:var(--accent)">
-        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 9.5 8 14.5 8 14.5C8 14.5 12.5 9.5 12.5 6C12.5 3.5 10.5 1.5 8 1.5Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <div id="loc-strip" class="loc-strip" style="margin:0.75rem 1.25rem 0">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 9.5 8 14.5 8 14.5S12.5 9.5 12.5 6C12.5 3.5 10.5 1.5 8 1.5Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
         <circle cx="8" cy="6" r="1.75" stroke="currentColor" stroke-width="1.5"/>
       </svg>
-      <div class="loc-info">
-        <div class="loc-name" id="loc-name">Location set</div>
-        <div class="loc-coords" id="loc-coords"></div>
+      <div style="flex:1;min-width:0">
+        <div id="loc-name" style="font-size:14px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Location set</div>
+        <div id="loc-coords" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent-dk);margin-top:2px"></div>
       </div>
       <button class="btn-clear-loc" onclick="clearPin()">Clear</button>
     </div>
 
     <!-- Save -->
-    <div class="save-section">
-      <button class="btn-save" id="btn-save" onclick="saveStore()">Save store</button>
-      <div class="save-hint" id="save-hint">Name required · Location optional</div>
+    <div style="padding:1.25rem 1.25rem 0">
+      <button class="btn-primary" id="btn-save" onclick="saveStore()">Save store</button>
+      <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px" id="save-hint">Name required · Location optional</p>
     </div>
 
-  </div><!-- end page-body -->
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script>
-    // ── State ─────────────────────────────────────────
     const params  = new URLSearchParams(location.search);
-    const editId  = params.get('id'); // set when editing an existing store
+    const editId  = params.get('id');
     let stores    = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
     let editStore = editId ? stores.find(s => s.id === editId) : null;
 
     let selectedEmoji = '🛒';
-    let selectedLat   = null;
-    let selectedLng   = null;
-    let selectedName  = null;
-    let marker        = null;
+    let selectedLat = null, selectedLng = null, selectedName = null;
+    let marker = null;
 
-    // Pre-fill if editing
     if (editStore) {
       document.getElementById('page-title').textContent = 'Edit store';
       document.getElementById('input-name').value = editStore.name;
@@ -496,11 +124,9 @@
       selectedLat   = editStore.lat   || null;
       selectedLng   = editStore.lng   || null;
       selectedName  = editStore.locName || null;
-      document.querySelectorAll('.emoji-btn').forEach(b =>
-        b.classList.toggle('selected', b.dataset.emoji === selectedEmoji));
+      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.toggle('selected', b.dataset.emoji === selectedEmoji));
     }
 
-    // ── Emoji picker ──────────────────────────────────
     document.getElementById('emoji-picker').addEventListener('click', e => {
       const btn = e.target.closest('.emoji-btn');
       if (!btn) return;
@@ -508,33 +134,23 @@
       document.querySelectorAll('.emoji-btn').forEach(b => b.classList.toggle('selected', b === btn));
     });
 
-    // ── Map init ──────────────────────────────────────
-    const initLat  = selectedLat || 44.5;
-    const initLng  = selectedLng || -79.4;
-    const initZoom = selectedLat ? 16 : 12;
-
-    const map = L.map('map', { center: [initLat, initLng], zoom: initZoom, zoomControl: true });
-
+    // Map init
+    const map = L.map('map', { center: [selectedLat||44.5, selectedLng||-79.4], zoom: selectedLat ? 16 : 12 });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19
     }).addTo(map);
 
     const pinIcon = L.divIcon({
       className: '',
-      html: `<div style="width:22px;height:22px;background:#6ee7b7;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #0a1a12;box-shadow:0 2px 8px rgba(0,0,0,0.6);"></div>`,
-      iconSize: [22, 22],
-      iconAnchor: [11, 22],
-      popupAnchor: [0, -26]
+      html: `<div style="width:22px;height:22px;background:#2BC4D4;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #1B2A6B;box-shadow:0 2px 8px rgba(27,42,107,0.4);"></div>`,
+      iconSize: [22,22], iconAnchor: [11,22], popupAnchor: [0,-26]
     });
 
-    // Show existing pin if editing
     if (selectedLat) {
       placeMarker(selectedLat, selectedLng, selectedName || 'Saved location');
       showLocStrip(selectedLat, selectedLng, selectedName || 'Saved location');
     }
 
-    // Map click
     map.on('click', async e => {
       const { lat, lng } = e.latlng;
       document.getElementById('map-hint').classList.add('hidden');
@@ -542,27 +158,18 @@
       placeMarker(lat, lng, 'Pin dropped');
       showLocStrip(lat, lng, 'Looking up address…');
       const name = await reverseGeocode(lat, lng);
-      if (name) {
-        selectedName = name;
-        showLocStrip(lat, lng, name);
-        if (marker) marker.setPopupContent(name).openPopup();
-      }
+      if (name) { selectedName = name; showLocStrip(lat, lng, name); if (marker) marker.setPopupContent(name).openPopup(); }
     });
 
     function placeMarker(lat, lng, label) {
       if (marker) map.removeLayer(marker);
-      marker = L.marker([lat, lng], { icon: pinIcon, draggable: true })
-        .addTo(map).bindPopup(label).openPopup();
+      marker = L.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(map).bindPopup(label).openPopup();
       marker.on('dragend', async () => {
         const p = marker.getLatLng();
         selectedLat = p.lat; selectedLng = p.lng; selectedName = null;
         showLocStrip(p.lat, p.lng, 'Looking up address…');
         const name = await reverseGeocode(p.lat, p.lng);
-        if (name) {
-          selectedName = name;
-          showLocStrip(p.lat, p.lng, name);
-          marker.setPopupContent(name).openPopup();
-        }
+        if (name) { selectedName = name; showLocStrip(p.lat, p.lng, name); marker.setPopupContent(name).openPopup(); }
       });
     }
 
@@ -570,7 +177,7 @@
       document.getElementById('loc-strip').classList.add('visible');
       document.getElementById('loc-name').textContent   = name || 'Pin dropped';
       document.getElementById('loc-coords').textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
-      document.getElementById('save-hint').textContent  = 'Name required · Location saved';
+      document.getElementById('save-hint').textContent  = 'Name required · Location saved ✓';
     }
 
     function clearPin() {
@@ -580,102 +187,76 @@
       document.getElementById('save-hint').textContent = 'Name required · Location optional';
     }
 
-    // ── Reverse geocode ───────────────────────────────
     async function reverseGeocode(lat, lng) {
       try {
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          { headers: { 'Accept-Language': 'en', 'User-Agent': 'ShopRemind/1.0' } }
-        );
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { 'Accept-Language': 'en', 'User-Agent': 'ShopRemind/1.0' } });
         const d = await r.json();
-        return d.display_name ? d.display_name.split(',').slice(0, 2).join(', ') : null;
+        return d.display_name ? d.display_name.split(',').slice(0,2).join(', ') : null;
       } catch { return null; }
     }
 
-    // ── Search ────────────────────────────────────────
     async function doSearch() {
       const q = document.getElementById('search-input').value.trim();
       if (!q) return;
-
       const spinner   = document.getElementById('search-spinner');
       const resultsEl = document.getElementById('search-results');
       spinner.classList.add('visible');
       resultsEl.classList.remove('visible');
       resultsEl.innerHTML = '';
-
       try {
-        // Add "Canada" as a fallback country hint to improve results
         const query = q.toLowerCase().includes('canada') || q.toLowerCase().includes('ontario') ? q : q + ', Canada';
-        const url   = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`;
-        const res   = await fetch(url, {
-          headers: { 'Accept-Language': 'en', 'User-Agent': 'ShopRemind/1.0' }
-        });
+        const res   = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`, { headers: { 'Accept-Language': 'en', 'User-Agent': 'ShopRemind/1.0' } });
         const data  = await res.json();
         spinner.classList.remove('visible');
-
         if (!data.length) {
           resultsEl.innerHTML = '<div class="result-item"><div class="result-name" style="color:var(--muted)">No results — try adding your city name</div></div>';
-          resultsEl.classList.add('visible');
-          return;
+          resultsEl.classList.add('visible'); return;
         }
-
         data.forEach(place => {
-          const div       = document.createElement('div');
-          div.className   = 'result-item';
-          const parts     = place.display_name.split(',');
-          const shortName = parts.slice(0, 2).join(', ').trim();
-          const addr      = parts.slice(2, 5).join(', ').trim();
-          div.innerHTML   = `<div class="result-name">${escHtml(shortName)}</div>${addr ? `<div class="result-addr">${escHtml(addr)}</div>` : ''}`;
+          const div   = document.createElement('div');
+          div.className = 'result-item';
+          const parts = place.display_name.split(',');
+          const sName = parts.slice(0,2).join(', ').trim();
+          const addr  = parts.slice(2,5).join(', ').trim();
+          div.innerHTML = `<div class="result-name">${escHtml(sName)}</div>${addr?`<div class="result-addr">${escHtml(addr)}</div>`:''}`;
           div.addEventListener('click', () => {
-            const lat = parseFloat(place.lat);
-            const lng = parseFloat(place.lon);
-            selectedLat  = lat; selectedLng = lng; selectedName = shortName;
-            map.setView([lat, lng], 17);
+            const lat = parseFloat(place.lat), lng = parseFloat(place.lon);
+            selectedLat = lat; selectedLng = lng; selectedName = sName;
+            map.setView([lat,lng], 17);
             document.getElementById('map-hint').classList.add('hidden');
-            placeMarker(lat, lng, shortName);
-            showLocStrip(lat, lng, shortName);
+            placeMarker(lat, lng, sName);
+            showLocStrip(lat, lng, sName);
             resultsEl.classList.remove('visible');
             document.getElementById('search-input').value = '';
           });
           resultsEl.appendChild(div);
         });
-
         resultsEl.classList.add('visible');
-
-      } catch(err) {
+      } catch {
         spinner.classList.remove('visible');
         resultsEl.innerHTML = '<div class="result-item"><div class="result-name" style="color:var(--danger)">Search failed — check your connection</div></div>';
         resultsEl.classList.add('visible');
       }
     }
 
-    // ── Use GPS ───────────────────────────────────────
     function useMyLocation() {
       if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
       const label = document.getElementById('gps-label');
       label.textContent = 'Getting location…';
       navigator.geolocation.getCurrentPosition(async pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
         selectedLat = lat; selectedLng = lng;
-        map.setView([lat, lng], 17);
+        map.setView([lat,lng], 17);
         document.getElementById('map-hint').classList.add('hidden');
         placeMarker(lat, lng, 'Your location');
         showLocStrip(lat, lng, 'Your current location');
         label.textContent = 'Use my current location';
         const name = await reverseGeocode(lat, lng);
-        if (name) {
-          selectedName = name;
-          showLocStrip(lat, lng, name);
-          if (marker) marker.setPopupContent(name).openPopup();
-        }
-      }, () => {
-        alert('Could not get location. Check permissions.');
-        label.textContent = 'Use my current location';
-      }, { enableHighAccuracy: true, timeout: 10000 });
+        if (name) { selectedName = name; showLocStrip(lat, lng, name); if (marker) marker.setPopupContent(name).openPopup(); }
+      }, () => { alert('Could not get location. Check permissions.'); label.textContent = 'Use my current location'; },
+      { enableHighAccuracy: true, timeout: 10000 });
     }
 
-    // ── Save store ────────────────────────────────────
     function saveStore() {
       const name = document.getElementById('input-name').value.trim();
       if (!name) {
@@ -685,37 +266,20 @@
         return;
       }
       const radius = parseInt(document.getElementById('input-radius').value);
-
       if (editId) {
         const idx = stores.findIndex(s => s.id === editId);
-        if (idx >= 0) {
-          stores[idx].name    = name;
-          stores[idx].emoji   = selectedEmoji;
-          stores[idx].radius  = radius;
-          stores[idx].lat     = selectedLat;
-          stores[idx].lng     = selectedLng;
-          stores[idx].locName = selectedName;
-        }
+        if (idx >= 0) Object.assign(stores[idx], { name, emoji: selectedEmoji, radius, lat: selectedLat, lng: selectedLng, locName: selectedName });
       } else {
-        stores.push({
-          id:      Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-          name, emoji: selectedEmoji, radius,
-          items:   [],
-          lat:     selectedLat,
-          lng:     selectedLng,
-          locName: selectedName
-        });
+        stores.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,5), name, emoji: selectedEmoji, radius, items: [], lat: selectedLat, lng: selectedLng, locName: selectedName });
       }
-
       localStorage.setItem('shopremind_stores', JSON.stringify(stores));
       window.location.href = 'index.html';
     }
 
     function escHtml(s) {
-      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // Invalidate map size after fonts/layout settle
     setTimeout(() => map.invalidateSize(), 300);
   </script>
 </body>
