@@ -3,568 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShopRemind — My Store Lists</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236ee7b7'/><path d='M50 20C36 20 25 31 25 44C25 62 50 80 50 80C50 80 75 62 75 44C75 31 64 20 50 20Z' fill='%230a1a12'/></svg>" />
+  <title>ShopRemind</title>
+  <link rel="icon" href="shopremindlogo-192.png" />
   <link rel="manifest" href="manifest.json" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:        #0f0f11;
-      --surface:   #1a1a1f;
-      --surface2:  #242429;
-      --border:    #2e2e36;
-      --accent:    #6ee7b7;
-      --accent2:   #fbbf24;
-      --text:      #f0eff4;
-      --muted:     #8b8a96;
-      --danger:    #f87171;
-      --radius:    14px;
-      --font:      'DM Sans', sans-serif;
-      --mono:      'DM Mono', monospace;
-    }
-
-    body {
-      background: var(--bg);
-      background-image:
-        radial-gradient(ellipse at 20% 20%, rgba(110,231,183,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(110,231,183,0.03) 0%, transparent 50%);
-      color: var(--text);
-      font-family: var(--font);
-      min-height: 100vh;
-      padding-bottom: 6rem;
-    }
-
-    /* ── Header ── */
-    header {
-      padding: 1.5rem 1.25rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: rgba(15,15,17,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      z-index: 100;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-icon {
-      width: 34px;
-      height: 34px;
-      background: var(--accent);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .logo-icon svg { display: block; }
-
-    .logo-text {
-      font-size: 17px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .btn-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-      color: var(--muted);
-    }
-    .btn-icon:hover { background: var(--surface2); border-color: #444; color: var(--text); }
-
-    /* ── Status bar ── */
-    #status-bar {
-      margin: 1rem 1.25rem 0;
-      padding: 10px 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--muted);
-      transition: border-color 0.3s;
-    }
-    #status-bar.active { border-color: var(--accent); color: var(--accent); }
-    #status-bar.error  { border-color: var(--danger); color: var(--danger); }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--muted);
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-    #status-bar.active .status-dot { background: var(--accent); animation: pulse 2s infinite; }
-    #status-bar.error  .status-dot { background: var(--danger); }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* ── Section heading ── */
-    .section-header {
-      padding: 1.5rem 1.25rem 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .section-title {
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-family: var(--mono);
-    }
-
-    .count-badge {
-      font-family: var(--mono);
-      font-size: 11px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 2px 8px;
-      border-radius: 20px;
-    }
-
-    /* ── Store cards ── */
-    .cards-grid {
-      padding: 0 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .store-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      transition: border-color 0.2s, transform 0.15s;
-      cursor: pointer;
-    }
-    .store-card:hover { border-color: #444; transform: translateY(-1px); }
-    .store-card.nearby { border-color: var(--accent); }
-
-    .card-top {
-      padding: 14px 16px 12px;
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .store-emoji {
-      width: 42px;
-      height: 42px;
-      background: var(--surface2);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      border: 1px solid var(--border);
-    }
-
-    .card-info { flex: 1; min-width: 0; }
-
-    .store-name {
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: -0.2px;
-    }
-
-    .store-meta {
-      margin-top: 3px;
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .store-meta .sep { opacity: 0.4; }
-
-    .nearby-pill {
-      display: none;
-      font-size: 10px;
-      font-weight: 500;
-      font-family: var(--mono);
-      background: rgba(110,231,183,0.12);
-      color: var(--accent);
-      border: 1px solid rgba(110,231,183,0.3);
-      padding: 2px 8px;
-      border-radius: 20px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .store-card.nearby .nearby-pill { display: inline-block; }
-
-    .card-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    .btn-sm {
-      height: 28px;
-      padding: 0 10px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font-size: 12px;
-      font-family: var(--font);
-      color: var(--muted);
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-      white-space: nowrap;
-    }
-    .btn-sm:hover { background: #2f2f38; color: var(--text); }
-    .btn-sm.danger:hover { color: var(--danger); border-color: var(--danger); background: rgba(248,113,113,0.06); }
-
-    /* ── Items preview ── */
-    .card-items {
-      border-top: 1px solid var(--border);
-      padding: 10px 16px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .item-chip {
-      font-size: 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-family: var(--mono);
-    }
-
-    .item-chip.checked {
-      text-decoration: line-through;
-      opacity: 0.45;
-    }
-
-    .items-more {
-      font-size: 12px;
-      color: var(--muted);
-      padding: 3px 0;
-      align-self: center;
-      font-family: var(--mono);
-    }
-
-    /* ── Empty state ── */
-    #empty-state {
-      padding: 3rem 2rem;
-      text-align: center;
-      display: none;
-    }
-    #empty-state.visible { display: block; }
-
-    .empty-icon {
-      font-size: 48px;
-      margin-bottom: 1rem;
-      opacity: 0.5;
-    }
-
-    .empty-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.3px;
-    }
-
-    .empty-sub {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    /* ── FAB ── */
-    .fab {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.25rem;
-      width: 56px;
-      height: 56px;
-      background: var(--accent);
-      border: none;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 24px rgba(110,231,183,0.35);
-      transition: transform 0.15s, box-shadow 0.15s;
-      z-index: 200;
-    }
-    .fab:hover { transform: scale(1.06); box-shadow: 0 6px 28px rgba(110,231,183,0.45); }
-    .fab:active { transform: scale(0.97); }
-
-    /* ── Modal ── */
-    .modal-bg {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      z-index: 300;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0;
-    }
-    .modal-bg.open { display: flex; }
-
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px 20px 0 0;
-      width: 100%;
-      max-width: 480px;
-      padding: 1.5rem 1.25rem 2rem;
-      animation: slideUp 0.25s ease;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(40px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-
-    .modal-handle {
-      width: 36px; height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      margin: 0 auto 1.25rem;
-    }
-
-    .modal-title {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 1.25rem;
-      letter-spacing: -0.3px;
-    }
-
-    .field { margin-bottom: 1rem; }
-
-    .field label {
-      display: block;
-      font-size: 12px;
-      font-family: var(--mono);
-      color: var(--muted);
-      margin-bottom: 6px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .field input, .field select {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 15px;
-      font-family: var(--font);
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .field input:focus, .field select:focus { border-color: var(--accent); }
-    .field select option { background: var(--surface); }
-
-    .emoji-picker {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .emoji-btn {
-      width: 40px; height: 40px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .emoji-btn:hover, .emoji-btn.selected {
-      border-color: var(--accent);
-      background: rgba(110,231,183,0.08);
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 1.25rem;
-    }
-
-    .btn-cancel {
-      flex: 1;
-      padding: 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 14px;
-      font-family: var(--font);
-      color: var(--muted);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-cancel:hover { background: #2f2f38; color: var(--text); }
-
-    .btn-save {
-      flex: 2;
-      padding: 12px;
-      background: var(--accent);
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: var(--font);
-      color: #0a1a12;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .btn-save:hover { opacity: 0.9; }
-
-    /* ── Permission notice ── */
-    #perm-notice {
-      margin: 1rem 1.25rem 0;
-      padding: 12px 14px;
-      background: rgba(251,191,36,0.08);
-      border: 1px solid rgba(251,191,36,0.25);
-      border-radius: var(--radius);
-      font-size: 13px;
-      color: var(--accent2);
-      display: none;
-      gap: 10px;
-      align-items: flex-start;
-      line-height: 1.5;
-    }
-    #perm-notice.visible { display: flex; }
-
-    .perm-enable {
-      margin-top: 8px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: underline;
-      color: var(--accent2);
-    }
-
-    /* ── Radius setting ── */
-    .radius-display {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--accent);
-    }
-
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-      margin-top: 8px;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px; height: 18px;
-      background: var(--accent);
-      border-radius: 50%;
-      cursor: pointer;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body style="padding-bottom:7rem">
 
-  <!-- Header -->
   <header>
     <div class="logo">
-      <div class="logo-icon">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M9 1.5C6 1.5 3.5 4 3.5 7C3.5 11 9 16.5 9 16.5C9 16.5 14.5 11 14.5 7C14.5 4 12 1.5 9 1.5Z" fill="#0a1a12"/>
-          <circle cx="9" cy="7" r="2" fill="#0a1a12" opacity="0.5"/>
-        </svg>
-      </div>
-      <span class="logo-text">ShopRemind</span>
+      <img src="shopremindlogo-192.png" alt="ShopRemind" />
+      <span class="logo-text">Shop<span>Remind</span></span>
     </div>
-    <div class="header-actions">
-      <button class="btn-icon" id="btn-settings" title="Settings" onclick="openSettings()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
+    <button class="btn-icon" onclick="openSettings()" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.1 3.1l1.4 1.4M13.5 13.5l1.4 1.4M13.5 4.5l1.4-1.4M3.1 14.9l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
   </header>
 
   <!-- Location permission notice -->
-  <div id="perm-notice">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+  <div id="perm-notice" class="notice-banner warn">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
       <path d="M8 5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+      <circle cx="8" cy="11.5" r="0.75" fill="currentColor"/>
     </svg>
     <div>
-      Location access is needed to send reminders when you arrive at a store.
-      <div class="perm-enable" onclick="requestLocation()">Enable location access →</div>
+      Location access needed for store reminders.
+      <span class="notice-link" onclick="requestLocation()">Enable location access →</span>
     </div>
   </div>
 
   <!-- GPS status bar -->
-  <div id="status-bar">
+  <div id="status-bar" class="status-bar" style="margin-top:0.75rem">
     <div class="status-dot"></div>
-    <span id="status-text">Waiting for location permission…</span>
+    <span id="status-text">Starting location…</span>
   </div>
 
-  <!-- Notification permission notice -->
-  <button id="notif-notice" onclick="requestNotifPermission()" style="display:none;width:calc(100% - 2.5rem);margin:0.75rem 1.25rem 0;padding:14px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius);font-size:13px;color:var(--accent2);gap:10px;align-items:center;line-height:1.5;cursor:pointer;text-align:left;font-family:var(--font);-webkit-tap-highlight-color:rgba(251,191,36,0.2);">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+  <!-- Notification permission banner -->
+  <button id="notif-notice" onclick="requestNotifPermission()" style="display:none;width:calc(100% - 2.5rem);margin:0.75rem 1.25rem 0;padding:14px 16px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.3);border-radius:16px;font-size:14px;color:#92610A;gap:12px;align-items:center;line-height:1.5;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;box-shadow:0 2px 12px rgba(27,42,107,0.08);">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
       <path d="M8 1a5 5 0 0 1 5 5c0 3-1.5 5-1.5 5H3.5S2 9 2 6a6 6 0 0 1 6-5z" stroke="currentColor" stroke-width="1.5"/>
       <path d="M6.5 13a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.5"/>
     </svg>
     <div style="flex:1">
-      <strong style="display:block;margin-bottom:2px">Tap to enable notifications</strong>
+      <strong style="display:block;margin-bottom:2px;font-size:15px">Tap to enable notifications</strong>
       <span style="opacity:0.8">Get alerted when you arrive at a store</span>
     </div>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:0.6">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:0.5">
       <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
@@ -575,69 +63,25 @@
     <span class="count-badge" id="store-count">0 stores</span>
   </div>
 
-  <!-- Cards -->
   <div class="cards-grid" id="cards-grid"></div>
 
-  <!-- Empty state -->
-  <div id="empty-state">
+  <div id="empty-state" class="empty-state">
     <div class="empty-icon">🛒</div>
     <div class="empty-title">No store lists yet</div>
-    <div class="empty-sub">Tap the <strong style="color:var(--accent)">+</strong> button to add your first store and shopping list.</div>
+    <div class="empty-sub">Tap the <strong style="color:var(--accent)">+</strong> button below to add your first store.</div>
   </div>
 
-  <!-- FAB -->
   <button class="fab" onclick="window.location.href='addstore.html'" title="Add store">
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-      <path d="M11 4v14M4 11h14" stroke="#0a1a12" stroke-width="2.5" stroke-linecap="round"/>
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+      <path d="M13 4v18M4 13h18" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
   </button>
-
-  <!-- Add Store Modal -->
-  <div class="modal-bg" id="modal-add">
-    <div class="modal">
-      <div class="modal-handle"></div>
-      <div class="modal-title" id="modal-title">Add store</div>
-
-      <div class="field">
-        <label>Store name</label>
-        <input type="text" id="input-name" placeholder="e.g. Costco, Walmart, Home Depot" />
-      </div>
-
-      <div class="field">
-        <label>Icon</label>
-        <div class="emoji-picker" id="emoji-picker">
-          <button class="emoji-btn selected" data-emoji="🛒">🛒</button>
-          <button class="emoji-btn" data-emoji="🏪">🏪</button>
-          <button class="emoji-btn" data-emoji="🥦">🥦</button>
-          <button class="emoji-btn" data-emoji="💊">💊</button>
-          <button class="emoji-btn" data-emoji="🔧">🔧</button>
-          <button class="emoji-btn" data-emoji="👕">👕</button>
-          <button class="emoji-btn" data-emoji="📦">📦</button>
-          <button class="emoji-btn" data-emoji="🍕">🍕</button>
-          <button class="emoji-btn" data-emoji="🐾">🐾</button>
-          <button class="emoji-btn" data-emoji="⚽">⚽</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Alert radius — <span class="radius-display" id="radius-display">200 m</span></label>
-        <input type="range" id="input-radius" min="50" max="1000" step="50" value="200"
-               oninput="document.getElementById('radius-display').textContent = this.value + ' m'" />
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-save" onclick="saveStore()">Save store</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Settings Modal -->
   <div class="modal-bg" id="modal-settings">
     <div class="modal">
       <div class="modal-handle"></div>
       <div class="modal-title">Settings</div>
-
       <div class="field">
         <label>Check interval</label>
         <select id="setting-interval">
@@ -647,7 +91,6 @@
           <option value="120000">Every 2 minutes</option>
         </select>
       </div>
-
       <div class="field">
         <label>Notifications</label>
         <select id="setting-notif">
@@ -655,51 +98,36 @@
           <option value="off">Disabled</option>
         </select>
       </div>
-
-      <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-top:.5rem">
-        Keep this page open (or install as a PWA) for reminders to work in the background.
-        A service worker file <code style="color:var(--accent)">watcher.js</code> will handle background checks once set up.
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-top:.5rem">
+        Keep this page open or install as a PWA for background reminders.
       </p>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeSettingsModal()">Close</button>
-        <button class="btn-save" onclick="saveSettings()">Save</button>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="closeSettingsModal()">Close</button>
+        <button class="btn-primary" onclick="saveSettings()">Save</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ── Data ─────────────────────────────────────────
-    let stores = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
+    let stores   = JSON.parse(localStorage.getItem('shopremind_stores')   || '[]');
     let settings = JSON.parse(localStorage.getItem('shopremind_settings') || '{"interval":30000,"notif":"on"}');
-    let editingId = null;
-    let selectedEmoji = '🛒';
-    let watchId = null;
-    let userLat = null, userLng = null;
+    let watchId  = null;
+    let userLat  = null, userLng = null;
 
-    // ── Render ────────────────────────────────────────
     function render() {
       const grid = document.getElementById('cards-grid');
       const empty = document.getElementById('empty-state');
-      const countEl = document.getElementById('store-count');
-
+      document.getElementById('store-count').textContent = stores.length + ' store' + (stores.length !== 1 ? 's' : '');
       grid.innerHTML = '';
-      countEl.textContent = stores.length + ' store' + (stores.length !== 1 ? 's' : '');
-
-      if (stores.length === 0) {
-        empty.classList.add('visible');
-        return;
-      }
+      if (stores.length === 0) { empty.classList.add('visible'); return; }
       empty.classList.remove('visible');
-
       stores.forEach(store => {
-        const nearby = isNearby(store);
-        const checked = (store.items || []).filter(i => i.done).length;
+        const nearby  = isNearby(store);
         const total   = (store.items || []).length;
+        const checked = (store.items || []).filter(i => i.done).length;
         const preview = (store.items || []).slice(0, 4);
         const more    = total - 4;
-
-        const card = document.createElement('div');
+        const card    = document.createElement('div');
         card.className = 'store-card' + (nearby ? ' nearby' : '');
         card.innerHTML = `
           <div class="card-top">
@@ -709,24 +137,20 @@
               <div class="store-meta">
                 <span>${total} item${total !== 1 ? 's' : ''}</span>
                 ${total > 0 ? `<span class="sep">·</span><span>${checked} checked</span>` : ''}
-                ${store.lat ? `<span class="sep">·</span><span>📍 set</span>` : `<span class="sep">·</span><span style="color:var(--accent2)">no location</span>`}
+                ${store.lat ? `<span class="sep">·</span><span style="color:var(--accent-dk)">📍 set</span>` : `<span class="sep">·</span><span style="color:var(--warn)">no location</span>`}
               </div>
-              <div style="margin-top:5px">
-                <span class="nearby-pill">● Nearby</span>
-              </div>
+              <span class="nearby-pill">● Nearby</span>
             </div>
             <div class="card-actions">
               <button class="btn-sm" onclick="event.stopPropagation();window.location.href='addstore.html?id=${store.id}'">Edit</button>
               <button class="btn-sm danger" onclick="event.stopPropagation();deleteStore('${store.id}')">✕</button>
             </div>
           </div>
-          ${total > 0 ? `
-          <div class="card-items">
+          ${total > 0 ? `<div class="card-items">
             ${preview.map(i => `<span class="item-chip${i.done?' checked':''}">${escHtml(i.text)}</span>`).join('')}
             ${more > 0 ? `<span class="items-more">+${more} more</span>` : ''}
-          </div>` : ''}
-        `;
-        card.addEventListener('click', () => openListPage(store.id));
+          </div>` : ''}`;
+        card.addEventListener('click', () => window.location.href = `edit.html?id=${store.id}`);
         grid.appendChild(card);
       });
     }
@@ -735,60 +159,34 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // ── Location ──────────────────────────────────────
     function requestLocation() {
-      if (!navigator.geolocation) {
-        setStatus('error', 'Geolocation not supported by this browser.');
-        return;
-      }
       navigator.geolocation.getCurrentPosition(pos => {
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
+        userLat = pos.coords.latitude; userLng = pos.coords.longitude;
         document.getElementById('perm-notice').classList.remove('visible');
         startWatcher();
-        render();
-      }, err => {
-        setStatus('error', 'Location denied. Reminders won\'t fire.');
-      });
+      }, () => setStatus('error', 'Location denied.'));
     }
 
     function startWatcher() {
       if (watchId) navigator.geolocation.clearWatch(watchId);
       watchId = navigator.geolocation.watchPosition(pos => {
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
+        userLat = pos.coords.latitude; userLng = pos.coords.longitude;
         setStatus('active', `Watching · ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
-        checkProximity();
-        pingServiceWorker();
-        render();
-      }, () => {
-        setStatus('error', 'Location error. Check permissions.');
-      }, { enableHighAccuracy: true, maximumAge: 15000 });
-    }
-
-    // Send current location + stores to service worker for background checks
-    function pingServiceWorker() {
-      if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CHECK_PROXIMITY',
-        stores,
-        userLat,
-        userLng
-      });
+        checkProximity(); pingServiceWorker(); render();
+      }, () => setStatus('error', 'Location error. Check permissions.'),
+      { enableHighAccuracy: true, maximumAge: 15000 });
     }
 
     function setStatus(state, text) {
       const bar = document.getElementById('status-bar');
-      const txt = document.getElementById('status-text');
-      bar.className = state === 'active' ? 'active' : state === 'error' ? 'error' : '';
-      txt.textContent = text;
+      bar.className = 'status-bar' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
+      document.getElementById('status-text').textContent = text;
     }
 
     function distMeters(lat1, lng1, lat2, lng2) {
       const R = 6371000;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLng = (lng2 - lng1) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+      const dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
@@ -798,243 +196,107 @@
     }
 
     const notified = new Set();
-
     function checkProximity() {
       if (settings.notif !== 'on') return;
       stores.forEach(store => {
         if (!store.lat) return;
-        const d = distMeters(userLat, userLng, store.lat, store.lng);
-        const key = store.id + '_' + Math.floor(Date.now() / 300000);
-        if (d <= (store.radius || 200) && !notified.has(key)) {
-          notified.add(key);
-          fireNotification(store);
+        const key = store.id + '_' + Math.floor(Date.now() / 600000);
+        if (distMeters(userLat, userLng, store.lat, store.lng) <= (store.radius || 200) && !notified.has(key)) {
+          notified.add(key); fireNotification(store);
         }
       });
     }
 
     function fireNotification(store) {
-      if (!('Notification' in window)) return;
-      const total = (store.items || []).length;
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
       const remaining = (store.items || []).filter(i => !i.done).length;
-      const send = () => new Notification(`You're near ${store.name}!`, {
-        body: remaining > 0 ? `${remaining} item${remaining !== 1 ? 's' : ''} left on your list.` : 'You have a list for this store.',
-        icon: 'icons/icon-192.png',
-        tag: store.id
+      const total     = (store.items || []).length;
+      new Notification(`📍 You're near ${store.name}!`, {
+        body: remaining > 0 ? `${remaining} item${remaining!==1?'s':''} left on your list.` : 'You have a list for this store.',
+        icon: 'shopremindlogo-192.png', tag: store.id
       });
-      if (Notification.permission === 'granted') {
-        send();
-      } else if (Notification.permission !== 'denied') {
-        Notification.requestPermission().then(p => { if (p === 'granted') send(); });
+    }
+
+    function pingServiceWorker() {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller)
+        navigator.serviceWorker.controller.postMessage({ type: 'CHECK_PROXIMITY', stores, userLat, userLng });
+    }
+
+    function checkNotifPermission() {
+      if (!('Notification' in window)) return;
+      document.getElementById('notif-notice').style.display =
+        Notification.permission === 'default' ? 'flex' : 'none';
+    }
+
+    function requestNotifPermission() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'denied') {
+        alert('Notifications are blocked. Tap the lock icon in the Chrome address bar → Site settings → Notifications → Allow.');
+        return;
       }
-    }
-
-    // ── Modal: Add / Edit ─────────────────────────────
-    function openAddModal() {
-      editingId = null;
-      selectedEmoji = '🛒';
-      document.getElementById('input-name').value = '';
-      document.getElementById('input-radius').value = 200;
-      document.getElementById('radius-display').textContent = '200 m';
-      document.getElementById('modal-title').textContent = 'Add store';
-      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.toggle('selected', b.dataset.emoji === '🛒'));
-      document.getElementById('modal-add').classList.add('open');
-      setTimeout(() => document.getElementById('input-name').focus(), 100);
-    }
-
-    function openEdit(id) {
-      const store = stores.find(s => s.id === id);
-      if (!store) return;
-      editingId = id;
-      selectedEmoji = store.emoji || '🛒';
-      document.getElementById('input-name').value = store.name;
-      document.getElementById('input-radius').value = store.radius || 200;
-      document.getElementById('radius-display').textContent = (store.radius || 200) + ' m';
-      document.getElementById('modal-title').textContent = 'Edit store';
-      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.toggle('selected', b.dataset.emoji === selectedEmoji));
-      document.getElementById('modal-add').classList.add('open');
-    }
-
-    function closeModal() {
-      document.getElementById('modal-add').classList.remove('open');
-    }
-
-    function saveStore() {
-      const name = document.getElementById('input-name').value.trim();
-      if (!name) { document.getElementById('input-name').focus(); return; }
-      const radius = parseInt(document.getElementById('input-radius').value);
-
-      if (editingId) {
-        const idx = stores.findIndex(s => s.id === editingId);
-        if (idx >= 0) { stores[idx].name = name; stores[idx].emoji = selectedEmoji; stores[idx].radius = radius; }
-      } else {
-        stores.push({ id: Date.now().toString(36), name, emoji: selectedEmoji, radius, items: [], lat: null, lng: null });
-      }
-      persist();
-      closeModal();
-      render();
+      Notification.requestPermission(result => {
+        if (result === 'granted') {
+          document.getElementById('notif-notice').style.display = 'none';
+          new Notification('ShopRemind notifications on!', { body: 'You\'ll be alerted when you arrive at a store.', icon: 'shopremindlogo-192.png' });
+        }
+      });
     }
 
     function deleteStore(id) {
       if (!confirm('Remove this store and its list?')) return;
       stores = stores.filter(s => s.id !== id);
-      persist();
+      localStorage.setItem('shopremind_stores', JSON.stringify(stores));
       render();
     }
 
-    // ── Emoji picker ──────────────────────────────────
-    document.getElementById('emoji-picker').addEventListener('click', e => {
-      const btn = e.target.closest('.emoji-btn');
-      if (!btn) return;
-      selectedEmoji = btn.dataset.emoji;
-      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.toggle('selected', b === btn));
-    });
-
-    // ── Settings ──────────────────────────────────────
     function openSettings() {
       document.getElementById('setting-interval').value = settings.interval;
-      document.getElementById('setting-notif').value = settings.notif;
+      document.getElementById('setting-notif').value    = settings.notif;
       document.getElementById('modal-settings').classList.add('open');
     }
-
-    function closeSettingsModal() {
-      document.getElementById('modal-settings').classList.remove('open');
-    }
-
+    function closeSettingsModal() { document.getElementById('modal-settings').classList.remove('open'); }
     function saveSettings() {
       settings.interval = parseInt(document.getElementById('setting-interval').value);
-      settings.notif = document.getElementById('setting-notif').value;
+      settings.notif    = document.getElementById('setting-notif').value;
       localStorage.setItem('shopremind_settings', JSON.stringify(settings));
       closeSettingsModal();
     }
-
-    // ── Navigate to list ──────────────────────────────
-    function openListPage(id) {
-      window.location.href = `edit.html?id=${id}`;
-    }
-
-    // ── Persist ───────────────────────────────────────
-    function persist() {
-      localStorage.setItem('shopremind_stores', JSON.stringify(stores));
-    }
-
-    // ── Close modals on background click ─────────────
-    document.querySelectorAll('.modal-bg').forEach(bg => {
-      bg.addEventListener('click', e => { if (e.target === bg) { bg.classList.remove('open'); } });
+    document.getElementById('modal-settings').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-settings')) closeSettingsModal();
     });
 
-    // ── Notification permission ───────────────────────
-    function checkNotifPermission() {
-      if (!('Notification' in window)) return;
-      const n = document.getElementById('notif-notice');
-      if (Notification.permission === 'default') {
-        n.style.display = 'flex';
-      } else {
-        n.style.display = 'none';
-      }
-    }
-
-    function requestNotifPermission() {
-      if (!('Notification' in window)) {
-        alert('Notifications not supported in this browser.');
-        return;
-      }
-      if (Notification.permission === 'granted') {
-        document.getElementById('notif-notice').style.display = 'none';
-        return;
-      }
-      if (Notification.permission === 'denied') {
-        alert('Notifications are blocked. In Chrome, tap the lock icon in the address bar → Site settings → Notifications → Allow.');
-        return;
-      }
-      // Request permission — must be called directly from a tap
-      Notification.requestPermission(result => {
-        if (result === 'granted') {
-          document.getElementById('notif-notice').style.display = 'none';
-          new Notification('ShopRemind notifications on!', {
-            body: 'You\'ll be alerted when you arrive at a store.'
-          });
-        } else {
-          alert('Notifications blocked. Tap the lock icon in the Chrome address bar → Site settings → Notifications → Allow.');
-        }
-      });
-    }
-
-    // ── Reload data when navigating back (bfcache fix) ──
-    window.addEventListener('pageshow', e => {
-      stores   = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
+    window.addEventListener('pageshow', () => {
+      stores   = JSON.parse(localStorage.getItem('shopremind_stores')   || '[]');
       settings = JSON.parse(localStorage.getItem('shopremind_settings') || '{"interval":30000,"notif":"on"}');
-      render();
-      checkNotifPermission();
+      render(); checkNotifPermission();
     });
 
-    // ── Init ─────────────────────────────────────────
     (function init() {
-      render();
-      checkNotifPermission();
-      if (!navigator.geolocation) {
-        setStatus('error', 'Geolocation not supported by this browser.');
-        return;
-      }
-
-      // Try to start the watcher immediately — if permission was already
-      // granted the browser will just start silently. Only show the banner
-      // if it actually fails or is explicitly denied.
-      setStatus('', 'Starting location…');
-
-      const tryStart = () => {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            // Permission confirmed — hide banner, start full watcher
-            userLat = pos.coords.latitude;
-            userLng = pos.coords.longitude;
-            document.getElementById('perm-notice').classList.remove('visible');
-            startWatcher();
-          },
-          err => {
-            if (err.code === 1) {
-              // Explicitly denied
-              document.getElementById('perm-notice').classList.add('visible');
-              setStatus('error', 'Location blocked. Click "Enable location access" above.');
-            } else {
-              // Timeout or unavailable — still try the watcher
-              document.getElementById('perm-notice').classList.remove('visible');
-              startWatcher();
-            }
-          },
-          { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
-        );
-      };
-
-      // Use permissions API if available to check state first
+      render(); checkNotifPermission();
+      if (!navigator.geolocation) { setStatus('error', 'Geolocation not supported.'); return; }
+      const tryStart = () => navigator.geolocation.getCurrentPosition(
+        pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+          document.getElementById('perm-notice').classList.remove('visible'); startWatcher(); },
+        err => { if (err.code === 1) {
+          document.getElementById('perm-notice').classList.add('visible');
+          setStatus('error', 'Location blocked. Tap "Enable location access" above.');
+        } else startWatcher(); },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
+      );
       if (navigator.permissions) {
         navigator.permissions.query({ name: 'geolocation' }).then(r => {
           if (r.state === 'denied') {
             document.getElementById('perm-notice').classList.add('visible');
-            setStatus('error', 'Location blocked. Click "Enable location access" above.');
-          } else {
-            // 'granted' or 'prompt' — just try it
-            tryStart();
-          }
+            setStatus('error', 'Location blocked.');
+          } else tryStart();
           r.onchange = () => {
-            if (r.state === 'granted') {
-              document.getElementById('perm-notice').classList.remove('visible');
-              startWatcher();
-            } else if (r.state === 'denied') {
-              document.getElementById('perm-notice').classList.add('visible');
-              setStatus('error', 'Location blocked. Click "Enable location access" above.');
-            }
+            if (r.state === 'granted') { document.getElementById('perm-notice').classList.remove('visible'); startWatcher(); }
+            else if (r.state === 'denied') { document.getElementById('perm-notice').classList.add('visible'); setStatus('error', 'Location blocked.'); }
           };
         }).catch(() => tryStart());
-      } else {
-        tryStart();
-      }
-
-      // Register service worker for background support
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(reg => console.log('SW registered:', reg.scope))
-          .catch(err => console.log('SW registration failed:', err));
-      }
+      } else tryStart();
+      if ('serviceWorker' in navigator)
+        navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW:', e));
     })();
   </script>
 </body>
