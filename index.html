@@ -554,6 +554,18 @@
     <span id="status-text">Waiting for location permission…</span>
   </div>
 
+  <!-- Notification permission notice -->
+  <div id="notif-notice" style="display:none;margin:0.75rem 1.25rem 0;padding:10px 14px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius);font-size:13px;color:var(--accent2);gap:10px;align-items:flex-start;line-height:1.5;">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+      <path d="M8 1a5 5 0 0 1 5 5c0 3-1.5 5-1.5 5H3.5S2 9 2 6a6 6 0 0 1 6-5z" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M6.5 13a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <div>
+      Allow notifications so ShopRemind can alert you when you arrive at a store.
+      <div class="perm-enable" onclick="requestNotifPermission()" style="color:var(--accent2)">Enable notifications →</div>
+    </div>
+  </div>
+
   <!-- Section header -->
   <div class="section-header">
     <span class="section-title">My stores</span>
@@ -907,16 +919,43 @@
       bg.addEventListener('click', e => { if (e.target === bg) { bg.classList.remove('open'); } });
     });
 
+    // ── Notification permission ───────────────────────
+    function checkNotifPermission() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        // Not yet asked — show the banner
+        const n = document.getElementById('notif-notice');
+        n.style.display = 'flex';
+      } else if (Notification.permission === 'granted') {
+        document.getElementById('notif-notice').style.display = 'none';
+      }
+    }
+
+    function requestNotifPermission() {
+      if (!('Notification' in window)) return;
+      Notification.requestPermission().then(result => {
+        if (result === 'granted') {
+          document.getElementById('notif-notice').style.display = 'none';
+          // Fire a test notification so user knows it worked
+          new Notification('ShopRemind notifications on!', {
+            body: 'You\'ll be alerted when you arrive at a store.'
+          });
+        }
+      });
+    }
+
     // ── Reload data when navigating back (bfcache fix) ──
     window.addEventListener('pageshow', e => {
       stores   = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
       settings = JSON.parse(localStorage.getItem('shopremind_settings') || '{"interval":30000,"notif":"on"}');
       render();
+      checkNotifPermission();
     });
 
     // ── Init ─────────────────────────────────────────
     (function init() {
       render();
+      checkNotifPermission();
       if (!navigator.geolocation) {
         setStatus('error', 'Geolocation not supported by this browser.');
         return;
