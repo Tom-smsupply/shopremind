@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopRemind — Set Location</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f0f11;
+      --surface:  #1a1a1f;
+      --surface2: #242429;
+      --border:   #2e2e36;
+      --accent:   #6ee7b7;
+      --accent2:  #fbbf24;
+      --text:     #f0eff4;
+      --muted:    #8b8a96;
+      --danger:   #f87171;
+      --radius:   14px;
+      --font:     'DM Sans', sans-serif;
+      --mono:     'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(15,15,17,0.95);
+      border-bottom: 1px solid var(--border);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    .btn-back {
+      width: 36px; height: 36px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-back:hover { background: var(--surface2); color: var(--text); }
+
+    .header-info { flex: 1; min-width: 0; }
+
+    .header-store-name {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── Map ── */
+    #map {
+      flex: 1;
+      width: 100%;
+      z-index: 1;
+    }
+
+    /* Override Leaflet tiles to have a dark tint */
+    .leaflet-tile {
+      filter: brightness(0.75) saturate(0.8) hue-rotate(180deg) invert(1) hue-rotate(180deg);
+    }
+
+    /* Leaflet popup styling */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px !important;
+      color: var(--text) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .leaflet-popup-content { font-family: var(--font) !important; font-size: 13px !important; color: var(--text) !important; }
+
+    /* ── Bottom panel ── */
+    .bottom-panel {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.25rem 1.5rem;
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    /* ── Search bar ── */
+    .search-wrap {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .btn-search {
+      padding: 0 16px;
+      height: 42px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-search:hover { background: #2f2f38; border-color: #444; }
+
+    /* ── Action buttons row ── */
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .btn-gps {
+      flex: 1;
+      padding: 10px 14px;
+      background: rgba(110,231,183,0.08);
+      border: 1px solid rgba(110,231,183,0.25);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-gps:hover { background: rgba(110,231,183,0.14); border-color: rgba(110,231,183,0.4); }
+
+    /* ── Selected location strip ── */
+    #selected-strip {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(110,231,183,0.06);
+      border: 1px solid rgba(110,231,183,0.2);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 13px;
+    }
+    #selected-strip.visible { display: flex; }
+
+    .selected-coords {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      flex: 1;
+    }
+
+    .selected-name {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── Save button ── */
+    .btn-save-loc {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      border: none;
+      border-radius: 11px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: var(--font);
+      color: #0a1a12;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: none;
+    }
+    .btn-save-loc.visible { display: block; }
+    .btn-save-loc:hover { opacity: 0.9; }
+    .btn-save-loc:active { transform: scale(0.98); }
+
+    /* ── Search results dropdown ── */
+    #search-results {
+      position: absolute;
+      bottom: 100%;
+      left: 0; right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 0 1.25rem 6px;
+      overflow: hidden;
+      z-index: 2000;
+      display: none;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    }
+    #search-results.visible { display: block; }
+
+    .result-item {
+      padding: 11px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      line-height: 1.4;
+    }
+    .result-item:last-child { border-bottom: none; }
+    .result-item:hover { background: var(--surface2); }
+
+    .result-name {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .result-addr {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+
+    /* ── Hint text ── */
+    .map-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15,15,17,0.85);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      pointer-events: none;
+      z-index: 500;
+      white-space: nowrap;
+      backdrop-filter: blur(6px);
+      transition: opacity 0.4s;
+    }
+    .map-hint.hidden { opacity: 0; }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(110,231,183,0.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    .spinner.visible { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Custom pin marker */
+    .pin-marker {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 3px solid #0a1a12;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a class="btn-back" id="btn-back" href="edit.html">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <div class="header-info">
+      <div class="header-store-name" id="hdr-name">Set location</div>
+      <div class="header-sub">Tap the map or search to pin the store</div>
+    </div>
+  </header>
+
+  <!-- Map -->
+  <div id="map">
+    <div class="map-hint" id="map-hint">Tap anywhere on the map to drop a pin</div>
+  </div>
+
+  <!-- Search results (above bottom panel) -->
+  <div id="search-results"></div>
+
+  <!-- Bottom panel -->
+  <div class="bottom-panel">
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text" placeholder="Search for a store or address…" autocomplete="off"
+             onkeydown="if(event.key==='Enter') doSearch()" />
+      <div class="spinner" id="search-spinner"></div>
+      <button class="btn-search" onclick="doSearch()">Search</button>
+    </div>
+
+    <!-- Use my location button -->
+    <div class="action-row">
+      <button class="btn-gps" onclick="useMyLocation()">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Use my current location
+      </button>
+    </div>
+
+    <!-- Selected location display -->
+    <div id="selected-strip">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;color:var(--accent)">
+        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 9.5 8 14.5 8 14.5C8 14.5 12.5 9.5 12.5 6C12.5 3.5 10.5 1.5 8 1.5Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <circle cx="8" cy="6" r="1.75" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <div>
+        <div class="selected-name" id="selected-name">Location selected</div>
+        <div class="selected-coords" id="selected-coords"></div>
+      </div>
+    </div>
+
+    <!-- Save button -->
+    <button class="btn-save-loc" id="btn-save" onclick="saveLocation()">
+      Save this location
+    </button>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <script>
+    // ── Load store ────────────────────────────────────
+    const params  = new URLSearchParams(location.search);
+    const storeId = params.get('id');
+    let stores = JSON.parse(localStorage.getItem('shopremind_stores') || '[]');
+    let store  = stores.find(s => s.id === storeId);
+
+    if (!store) {
+      document.body.innerHTML = '<p style="padding:2rem;color:#8b8a96;font-family:sans-serif">Store not found. <a href="index.html" style="color:#6ee7b7">Go back \u2192</a></p>';
+      throw new Error('Store not found');
+    }
+
+    // Set back link and header
+    document.getElementById('btn-back').href = 'edit.html?id=' + storeId;
+    document.getElementById('hdr-name').textContent = (store.emoji || '') + ' ' + store.name;
+
+    // ── Selected pin state ────────────────────────────
+    let selectedLat = store.lat || null;
+    let selectedLng = store.lng || null;
+    let selectedName = store.locName || null;
+    let marker = null;
+
+    // ── Init map ──────────────────────────────────────
+    // Center on existing pin, or Orillia area, or generic Canada
+    const initLat = selectedLat || 44.5;
+    const initLng = selectedLng || -79.4;
+    const initZoom = selectedLat ? 16 : 13;
+
+    const map = L.map('map', {
+      center: [initLat, initLng],
+      zoom: initZoom,
+      zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Custom green pin icon
+    const pinIcon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:24px;height:24px;
+        background:#6ee7b7;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        border:3px solid #0a1a12;
+        box-shadow:0 2px 8px rgba(0,0,0,0.6);
+      "></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 24],
+      popupAnchor: [0, -28]
+    });
+
+    // If store already has a location, show it
+    if (selectedLat) {
+      placeMarker(selectedLat, selectedLng, selectedName || 'Saved location', false);
+    }
+
+    // ── Map click → drop pin ──────────────────────────
+    map.on('click', async function(e) {
+      const { lat, lng } = e.latlng;
+      document.getElementById('map-hint').classList.add('hidden');
+      placeMarker(lat, lng, 'Looking up address…', true);
+      selectedLat = lat;
+      selectedLng = lng;
+      selectedName = null;
+      showSelected(lat, lng, 'Looking up address…');
+
+      // Reverse geocode to get a human-readable name
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const data = await res.json();
+        const name = data.display_name ? data.display_name.split(',').slice(0, 2).join(', ') : null;
+        if (name) {
+          selectedName = name;
+          showSelected(lat, lng, name);
+          if (marker) marker.setPopupContent(name).openPopup();
+        }
+      } catch(e) {
+        // Reverse geocode failed — just use coordinates
+      }
+    });
+
+    // ── Place marker on map ───────────────────────────
+    function placeMarker(lat, lng, label, openPop) {
+      if (marker) map.removeLayer(marker);
+      marker = L.marker([lat, lng], { icon: pinIcon, draggable: true })
+        .addTo(map)
+        .bindPopup(label);
+      if (openPop) marker.openPopup();
+
+      // Allow dragging the pin to fine-tune
+      marker.on('dragend', async function() {
+        const pos = marker.getLatLng();
+        selectedLat = pos.lat;
+        selectedLng = pos.lng;
+        selectedName = null;
+        showSelected(pos.lat, pos.lng, 'Looking up address…');
+        marker.setPopupContent('Looking up address…').openPopup();
+        try {
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.lat}&lon=${pos.lng}&format=json`);
+          const data = await res.json();
+          const name = data.display_name ? data.display_name.split(',').slice(0, 2).join(', ') : null;
+          if (name) {
+            selectedName = name;
+            showSelected(pos.lat, pos.lng, name);
+            marker.setPopupContent(name).openPopup();
+          }
+        } catch(e) {}
+      });
+    }
+
+    // ── Show selected strip + save button ─────────────
+    function showSelected(lat, lng, name) {
+      document.getElementById('selected-strip').classList.add('visible');
+      document.getElementById('btn-save').classList.add('visible');
+      document.getElementById('selected-name').textContent = name || 'Pin dropped';
+      document.getElementById('selected-coords').textContent =
+        lat.toFixed(5) + ', ' + lng.toFixed(5);
+    }
+
+    // ── Use my current GPS location ───────────────────
+    function useMyLocation() {
+      if (!navigator.geolocation) {
+        alert('Geolocation not supported.');
+        return;
+      }
+      const btn = document.querySelector('.btn-gps');
+      btn.textContent = 'Getting location…';
+      btn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        selectedLat = lat;
+        selectedLng = lng;
+        map.setView([lat, lng], 17);
+        document.getElementById('map-hint').classList.add('hidden');
+        placeMarker(lat, lng, 'Your location', true);
+        showSelected(lat, lng, 'Your current location');
+
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Use my current location`;
+        btn.disabled = false;
+
+        // Reverse geocode
+        try {
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          const data = await res.json();
+          const name = data.display_name ? data.display_name.split(',').slice(0, 2).join(', ') : null;
+          if (name) {
+            selectedName = name;
+            showSelected(lat, lng, name);
+            if (marker) marker.setPopupContent(name).openPopup();
+          }
+        } catch(e) {}
+
+      }, err => {
+        alert('Could not get your location. Check permissions.');
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Use my current location`;
+        btn.disabled = false;
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    // ── Search (Nominatim) ────────────────────────────
+    async function doSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      if (!q) return;
+
+      const spinner = document.getElementById('search-spinner');
+      const resultsEl = document.getElementById('search-results');
+      spinner.classList.add('visible');
+      resultsEl.classList.remove('visible');
+      resultsEl.innerHTML = '';
+
+      try {
+        // Bias search toward the user's approximate area if we have coords
+        const viewbox = selectedLat
+          ? `&viewbox=${selectedLng-0.5},${selectedLat+0.5},${selectedLng+0.5},${selectedLat-0.5}&bounded=0`
+          : '';
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1${viewbox}`;
+        const res  = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await res.json();
+
+        spinner.classList.remove('visible');
+
+        if (!data.length) {
+          resultsEl.innerHTML = '<div class="result-item"><div class="result-name" style="color:var(--muted)">No results found</div></div>';
+          resultsEl.classList.add('visible');
+          return;
+        }
+
+        data.forEach(place => {
+          const div = document.createElement('div');
+          div.className = 'result-item';
+          const shortName = place.display_name.split(',').slice(0, 2).join(', ');
+          const addr      = place.display_name.split(',').slice(2, 4).join(', ').trim();
+          div.innerHTML = `<div class="result-name">${escHtml(shortName)}</div>${addr ? `<div class="result-addr">${escHtml(addr)}</div>` : ''}`;
+          div.addEventListener('click', () => {
+            const lat = parseFloat(place.lat);
+            const lng = parseFloat(place.lon);
+            selectedLat = lat;
+            selectedLng = lng;
+            selectedName = shortName;
+            map.setView([lat, lng], 17);
+            document.getElementById('map-hint').classList.add('hidden');
+            placeMarker(lat, lng, shortName, true);
+            showSelected(lat, lng, shortName);
+            resultsEl.classList.remove('visible');
+            document.getElementById('search-input').value = '';
+          });
+          resultsEl.appendChild(div);
+        });
+
+        resultsEl.classList.add('visible');
+
+      } catch(err) {
+        spinner.classList.remove('visible');
+        resultsEl.innerHTML = '<div class="result-item"><div class="result-name" style="color:var(--danger)">Search failed. Check your connection.</div></div>';
+        resultsEl.classList.add('visible');
+      }
+    }
+
+    // Close search results when clicking the map
+    map.on('click', () => {
+      document.getElementById('search-results').classList.remove('visible');
+    });
+
+    // ── Save location to store ────────────────────────
+    function saveLocation() {
+      if (selectedLat === null) return;
+
+      const idx = stores.findIndex(s => s.id === storeId);
+      if (idx < 0) return;
+
+      stores[idx].lat     = selectedLat;
+      stores[idx].lng     = selectedLng;
+      stores[idx].locName = selectedName || null;
+      localStorage.setItem('shopremind_stores', JSON.stringify(stores));
+
+      // Go back to the edit page
+      window.location.href = 'edit.html?id=' + storeId;
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Keyboard search on Enter ──────────────────────
+    document.getElementById('search-input').addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.getElementById('search-results').classList.remove('visible');
+      }
+    });
+  </script>
+</body>
+</html>
