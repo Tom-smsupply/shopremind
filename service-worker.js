@@ -1,7 +1,7 @@
 // ShopRemind Service Worker
 // Handles background sync and push notifications
 
-const CACHE_NAME = 'shopremind-v2';
+const CACHE_NAME = 'shopremind-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -33,6 +33,12 @@ self.addEventListener('activate', e => {
 
 // ── Fetch — serve from cache, fall back to network ─
 self.addEventListener('fetch', e => {
+  // Always serve index.html for root requests
+  const url = new URL(e.request.url);
+  if (url.pathname === '/' || url.pathname === '') {
+    e.respondWith(caches.match('/index.html'));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
