@@ -7,7 +7,9 @@ const ASSETS = [
   '/index.html',
   '/edit.html',
   '/addstore.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/shopremindlogo-192.png',
+  '/shopremindlogo-512.png'
 ];
 
 // ── Install — cache app shell ─────────────────────
@@ -79,8 +81,8 @@ function checkAndNotify(stores, userLat, userLng) {
           : total > 0
           ? 'All items checked off — good job!'
           : 'You have a list for this store.',
-        icon:  '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
+        icon:  '/shopremindlogo-192.png',
+        badge: '/shopremindlogo-192.png',
         tag:   store.id,
         renotify: false,
         data: { storeId: store.id, url: '/edit.html?id=' + store.id }
