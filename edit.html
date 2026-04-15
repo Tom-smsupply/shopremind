@@ -137,6 +137,17 @@
     document.getElementById('hdr-emoji').textContent = store.emoji || '🛒';
     document.getElementById('hdr-name').textContent  = store.name;
     document.title = 'ShopRemind \u2014 ' + store.name;
+
+    // Show logo if saved
+    if (store.logoUrl) {
+      const emojiEl = document.getElementById('hdr-emoji');
+      const img = document.createElement('img');
+      img.src = store.logoUrl;
+      img.style.cssText = 'width:34px;height:34px;border-radius:8px;object-fit:contain;border:1px solid var(--border);background:#fff;padding:3px;flex-shrink:0';
+      img.onerror = () => img.replaceWith(emojiEl);
+      emojiEl.replaceWith(img);
+    }
+
     updateLocUI();
 
     function render() {
