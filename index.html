@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,7 +168,6 @@
     }
 
     // ── Auto logo lookup ──────────────────────────────
-    // Maps common store name keywords to their domain
     const STORE_DOMAINS = {
       'home depot': 'homedepot.com',
       'walmart': 'walmart.com',
@@ -176,14 +176,15 @@
       'loblaws': 'loblaws.ca',
       'sobeys': 'sobeys.com',
       'metro': 'metro.ca',
-      'shoppers': 'shoppersdrugmart.ca',
       'shoppers drug mart': 'shoppersdrugmart.ca',
+      'shoppers': 'shoppersdrugmart.ca',
       'rona': 'rona.ca',
       'dollarama': 'dollarama.com',
       'ikea': 'ikea.com',
       'amazon': 'amazon.ca',
       'best buy': 'bestbuy.ca',
       'tim hortons': 'timhortons.com',
+      'mcdonalds': 'mcdonalds.com',
       'mcdonald': 'mcdonalds.com',
       'staples': 'staples.ca',
       'sport chek': 'sportchek.ca',
@@ -202,39 +203,58 @@
       'giant tiger': 'gianttiger.com',
       'lcbo': 'lcbo.com',
       'beer store': 'thebeerstore.ca',
+      'real canadian superstore': 'realcanadiansuperstore.ca',
+      'superstore': 'realcanadiansuperstore.ca',
+      'fortinos': 'fortinos.ca',
+      'valumart': 'valumart.ca',
+      'independent': 'yourindependentgrocer.ca',
+      'pier 1': 'pier1.com',
+      'michaels': 'michaels.com',
+      'fabricland': 'fabricland.com',
+      'the bay': 'thebay.com',
+      'hudson bay': 'thebay.com',
+      'old navy': 'oldnavy.com',
+      'gap': 'gap.com',
+      'sport mart': 'sportmart.ca',
     };
 
-    async function fetchLogo(store) {
+    function getDomain(store) {
       const nameLower = store.name.toLowerCase();
-
-      // Check our known domain list first
-      let domain = null;
-      for (const [keyword, d] of Object.entries(STORE_DOMAINS)) {
-        if (nameLower.includes(keyword)) { domain = d; break; }
+      for (const [keyword, domain] of Object.entries(STORE_DOMAINS)) {
+        if (nameLower.includes(keyword)) return domain;
       }
+      // Guess from first meaningful word
+      const firstWord = nameLower.replace(/[^a-z0-9\s]/g,'').trim().split(/\s+/)[0];
+      if (firstWord && firstWord.length > 3) return firstWord + '.com';
+      return null;
+    }
 
-      // If not found, try to guess domain from first word of store name
-      if (!domain) {
-        const firstWord = nameLower.replace(/[^a-z0-9\s]/g,'').trim().split(/\s+/)[0];
-        if (firstWord && firstWord.length > 2) domain = firstWord + '.com';
-      }
-
+    async function fetchLogo(store) {
+      const domain = getDomain(store);
       if (!domain) return;
 
-      const logoUrl = `https://logo.clearbit.com/${domain}?size=128`;
+      // Use Google's high-res favicon service — reliable, no API key, no CORS issues
+      const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
-      // Test the logo loads before saving
       const img = new Image();
       img.onload = () => {
-        // Save logo URL to store data
+        // Google returns a 16x16 grey placeholder for unknown domains
+        // Check image is at least 32px to confirm it's a real logo
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        // If width came back as 16, it's the fallback — skip it
+        if (img.naturalWidth <= 16) return;
+
         const idx = stores.findIndex(s => s.id === store.id);
-        if (idx >= 0) {
+        if (idx >= 0 && !stores[idx].logoUrl) {
           stores[idx].logoUrl = logoUrl;
           localStorage.setItem('shopremind_stores', JSON.stringify(stores));
-          render(); // Re-render with logo
+          render();
         }
       };
-      img.onerror = () => {}; // Logo not found — stay with emoji
+      img.onerror = () => {};
       img.src = logoUrl;
     }
 
@@ -351,6 +371,12 @@
     window.addEventListener('pageshow', () => {
       stores   = JSON.parse(localStorage.getItem('shopremind_stores')   || '[]');
       settings = JSON.parse(localStorage.getItem('shopremind_settings') || '{"interval":30000,"notif":"on"}');
+      // Clear any old Clearbit logo URLs so they get re-fetched with new service
+      let changed = false;
+      stores.forEach(s => {
+        if (s.logoUrl && s.logoUrl.includes('clearbit')) { delete s.logoUrl; changed = true; }
+      });
+      if (changed) localStorage.setItem('shopremind_stores', JSON.stringify(stores));
       render(); checkNotifPermission();
     });
 
