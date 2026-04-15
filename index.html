@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -133,7 +132,7 @@
 
         // Build logo — use saved logo URL, or emoji fallback
         const logoHtml = store.logoUrl
-          ? `<img src="${escHtml(store.logoUrl)}" alt="" style="width:42px;height:42px;border-radius:10px;object-fit:contain;border:1px solid var(--border);background:#fff;padding:4px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"  /><div class="store-emoji" style="display:none">${store.emoji||'🛒'}</div>`
+          ? `<img src="${escHtml(store.logoUrl)}" alt="" style="width:42px;height:42px;border-radius:10px;object-fit:contain;border:1px solid var(--border);background:#fff;padding:4px;flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';var idx=stores.findIndex(s=>s.id==='${store.id}');if(idx>=0){delete stores[idx].logoUrl;localStorage.setItem('shopremind_stores',JSON.stringify(stores))}" /><div class="store-emoji" style="display:none">${store.emoji||'🛒'}</div>`
           : `<div class="store-emoji">${store.emoji||'🛒'}</div>`;
 
         card.innerHTML = `
@@ -170,8 +169,8 @@
     // ── Auto logo lookup ──────────────────────────────
     const STORE_DOMAINS = {
       'home depot': 'homedepot.com',
-      'walmart': 'walmart.com',
-      'costco': 'costco.com',
+      'walmart': 'walmart.ca',
+      'costco': 'costco.ca',
       'canadian tire': 'canadiantire.ca',
       'loblaws': 'loblaws.ca',
       'sobeys': 'sobeys.com',
@@ -207,15 +206,16 @@
       'superstore': 'realcanadiansuperstore.ca',
       'fortinos': 'fortinos.ca',
       'valumart': 'valumart.ca',
-      'independent': 'yourindependentgrocer.ca',
-      'pier 1': 'pier1.com',
       'michaels': 'michaels.com',
-      'fabricland': 'fabricland.com',
       'the bay': 'thebay.com',
       'hudson bay': 'thebay.com',
       'old navy': 'oldnavy.com',
       'gap': 'gap.com',
-      'sport mart': 'sportmart.ca',
+      'fabricland': 'fabricland.com',
+      'bulk barn': 'bulkbarn.ca',
+      'pet valu': 'petvalu.com',
+      'farmboy': 'farm-boy.com',
+      'farm boy': 'farm-boy.com',
     };
 
     function getDomain(store) {
@@ -233,25 +233,19 @@
       const domain = getDomain(store);
       if (!domain) return;
 
-      // Use Google's high-res favicon service — reliable, no API key, no CORS issues
       const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
-        // Google returns a 16x16 grey placeholder for unknown domains
-        // Check image is at least 32px to confirm it's a real logo
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width; canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        // If width came back as 16, it's the fallback — skip it
-        if (img.naturalWidth <= 16) return;
-
-        const idx = stores.findIndex(s => s.id === store.id);
-        if (idx >= 0 && !stores[idx].logoUrl) {
-          stores[idx].logoUrl = logoUrl;
-          localStorage.setItem('shopremind_stores', JSON.stringify(stores));
-          render();
+        // Save if we got a real image (width > 16 means not the generic globe fallback)
+        if (img.naturalWidth > 16) {
+          const idx = stores.findIndex(s => s.id === store.id);
+          if (idx >= 0 && !stores[idx].logoUrl) {
+            stores[idx].logoUrl = logoUrl;
+            localStorage.setItem('shopremind_stores', JSON.stringify(stores));
+            render();
+          }
         }
       };
       img.onerror = () => {};
@@ -371,11 +365,9 @@
     window.addEventListener('pageshow', () => {
       stores   = JSON.parse(localStorage.getItem('shopremind_stores')   || '[]');
       settings = JSON.parse(localStorage.getItem('shopremind_settings') || '{"interval":30000,"notif":"on"}');
-      // Clear any old Clearbit logo URLs so they get re-fetched with new service
+      // Clear any old cached logo URLs so they re-fetch with latest domains
       let changed = false;
-      stores.forEach(s => {
-        if (s.logoUrl && s.logoUrl.includes('clearbit')) { delete s.logoUrl; changed = true; }
-      });
+      stores.forEach(s => { if (s.logoUrl) { delete s.logoUrl; changed = true; } });
       if (changed) localStorage.setItem('shopremind_stores', JSON.stringify(stores));
       render(); checkNotifPermission();
     });
